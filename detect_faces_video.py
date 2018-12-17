@@ -9,6 +9,7 @@ import argparse
 import imutils
 import time
 import cv2
+import vlc
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -29,6 +30,7 @@ print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
 time.sleep(2.0)
 
+i = None
 # loop over the frames from the video stream
 while True:
 	# grab the frame from the threaded video stream and resize it
@@ -46,38 +48,43 @@ while True:
 	net.setInput(blob)
 	detections = net.forward()
 
+#	if detections != None
+		
 	# loop over the detections
-	for i in range(0, detections.shape[2]):
+#	for i in range(0, detections.shape[2]):
 		# extract the confidence (i.e., probability) associated with the
 		# prediction
-		confidence = detections[0, 0, i, 2]
+	confidence = detections[0, 0, 0, 2]
 
 		# filter out weak detections by ensuring the `confidence` is
 		# greater than the minimum confidence
-		if confidence < args["confidence"]:
+	if confidence < args["confidence"]:
+			i = None
+#print("coucou")
 			continue
 
 		# compute the (x, y)-coordinates of the bounding box for the
 		# object
-		box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-		(startX, startY, endX, endY) = box.astype("int")
+	box = detections[0, 0, 0, 3:7] * np.array([w, h, w, h])
+	(startX, startY, endX, endY) = box.astype("int")
  
 		# draw the bounding box of the face along with the associated
 		# probability
-		text = "{:.2f}%".format(confidence * 100)
+	text = "{:.2f}%".format(confidence * 100)
 		#print(str(confidence))
-		y = startY - 10 if startY - 10 > 10 else startY + 10
-		cv2.rectangle(frame, (startX - 20, startY), (endX, endY),
+	y = startY - 10 if startY - 10 > 10 else startY + 10
+	cv2.rectangle(frame, (startX - 20, startY), (endX, endY),
 			(0, 0, 255), 2)
-		cv2.putText(frame, text, (startX, y),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
-		if (confidence * 100) > 85:
-			crop_img = frame[startY:endY, startX:endX]
-			cv2.imwrite('pic/opencv'+str(i)+'.jpg',crop_img)
-		else:
-			#system("say stop moving")
-			print("stop moving")
-			break
+	cv2.putText(frame, text, (startX, y),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+	
+	if (confidence * 100) > 85:
+		if i == None:
+			p = "~/face_recognition/music/AH.mp3"
+			system("mpg123 " + p)
+			i = 1
+		crop_img = frame[startY:endY, startX:endX]
+		cv2.imwrite('pic/opencv.jpg',crop_img)
 
 	# show the output frame
 	cv2.imshow("Frame", frame)
